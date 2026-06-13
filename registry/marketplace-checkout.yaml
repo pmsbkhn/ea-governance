@@ -16,3 +16,9 @@ spec:
     stateWritersPublish: enforce
   waivers: []
   notes: "Value-object-only model: no msfw Entity subtypes (allowEmptyShould)."
+  runtimeObjectives:
+    - id: httpLatencyMax
+      query: 'max(http_server_requests_seconds_max{application="checkout-service"})'
+      threshold: 1.0
+      warnAt: 0.5
+      unit: s

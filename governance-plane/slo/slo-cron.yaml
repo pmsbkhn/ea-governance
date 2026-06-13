@@ -1,0 +1,45 @@
+# Runtime/SLO fitness evaluator — a CronJob in the `governance` namespace that reads prod Prometheus
+# and writes runtime verdicts to the governance plane (same FitnessResult contract as the CI tier).
+# The gov-slo ConfigMap (slo-evaluator.py) and gov-registry (registry→JSON incl runtimeObjectives)
+# are created by deploy.sh.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: slo-evaluator
+  namespace: governance
+  labels: { app: slo-evaluator }
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 120
+      template:
+        metadata:
+          labels: { app: slo-evaluator }
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: slo-evaluator
+              image: python:3.12-slim
+              command: ["python3", "/app/slo-evaluator.py"]
+              env:
+                - { name: PROM_URL,       value: http://prometheus.infra:9090 }
+                - { name: GOVERNANCE_URL, value: http://governance-plane.governance:8080 }
+                - { name: REGISTRY_PATH,        value: /app/registry.json }
+                - { name: DRIFT_OFFSET_SECONDS, value: "3600" }
+                - { name: DRIFT_PCT,            value: "0.5" }
+              resources:
+                requests: { cpu: 25m, memory: 64Mi }
+                limits:   { cpu: 250m, memory: 128Mi }
+              volumeMounts:
+                - { name: slo,      mountPath: /app/slo-evaluator.py, subPath: slo-evaluator.py }
+                - { name: registry, mountPath: /app/registry.json,    subPath: registry.json }
+          volumes:
+            - name: slo
+              configMap: { name: gov-slo }
+            - name: registry
+              configMap: { name: gov-registry }

@@ -15,3 +15,17 @@ spec:
     entityEncapsulation: enforce
     stateWritersPublish: enforce
   waivers: []
+  runtimeObjectives:
+    - id: httpLatencyMax
+      query: 'max(http_server_requests_seconds_max{application="notification-service"})'
+      threshold: 1.0
+      warnAt: 0.5
+      unit: s
+    - id: outboxPendingLag
+      query: 'sum(msfw_outbox_pending_events{application="notification-service"})'
+      threshold: 500
+      warnAt: 100
+    - id: outboxParked
+      query: 'sum(msfw_outbox_parked_events{application="notification-service"})'
+      threshold: 1
+      warnAt: 1
