@@ -9,6 +9,6 @@ spec:
   pnl: platform
   stack: java-msfw-framework
   fitnessFunctions:
-    msfwModuleGraph: warn
+    msfwModuleGraph: enforce
   waivers: []
   notes: "The framework itself; module-graph guardrail, not service rules."

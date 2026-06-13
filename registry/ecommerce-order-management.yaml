@@ -14,5 +14,9 @@ spec:
     aggregateEncapsulation: warn
     entityEncapsulation: warn
     stateWritersPublish: warn
-  waivers: []
+  waivers:
+    - rule: stateWritersPublish
+      reason: "RegisterProductUc writes state but is not @EventPublishHandler (event not via outbox)"
+      expires: 2026-09-30
+      ticket: F-4
   notes: "Adopting."
