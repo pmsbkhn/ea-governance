@@ -29,4 +29,12 @@
             <version>${archunit.version}</version>
         </dependency>
     </dependencies>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages — ea-governance</name>
+            <url>https://maven.pkg.github.com/pmsbkhn/ea-governance</url>
+        </repository>
+    </distributionManagement>
 </project>
