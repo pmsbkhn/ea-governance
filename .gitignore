@@ -1,3 +1,7 @@
 .vscode/
 target/
 *.class
+
+# Python bytecode cache (scorecard collector)
+__pycache__/
+*.pyc

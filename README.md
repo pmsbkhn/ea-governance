@@ -40,6 +40,11 @@ The scorecard that turns all this into a per-P&L conformance view is fed by one 
 emitted on every evaluation — static (this harness) and dynamic (SLO) tiers share the same shape.
 See [`docs/fitness-result.md`](docs/fitness-result.md).
 
+Where those verdicts *land* (and why the local Pushgateway/Grafana view is scaffolding, not the
+target) is decided in [`docs/adr/0001-governance-plane.md`](docs/adr/0001-governance-plane.md): the
+governance plane is a subsystem separate from production observability — CI never pushes into a prod
+cluster.
+
 ## Trajectory (local experiment → 700-system estate)
 
 - **Now (msfw cohort):** rules embedded-feel via local install, short feedback; registry as YAML.
