@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pmsbkhn/ea-governance/docs/fitness-result.schema.json",
+  "title": "EA Fitness Result",
+  "description": "The canonical result of one fitness-function evaluation. Both the static layer (ea-archrules FitnessHarness, OPA/conftest gates) and the dynamic layer (SLO exporters) emit this shape, keyed by `system`, so the EA portfolio scorecard rolls verdicts up per P&L / domain over time.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "system", "rule", "layer", "verdict", "ts", "source"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1"
+    },
+    "system": {
+      "type": "string",
+      "description": "Registry system id (the SSOT key, e.g. `ecommerce-inventory`). The scorecard joins on this to resolve owner / P&L / domain."
+    },
+    "rule": {
+      "type": "string",
+      "description": "Fitness-function id, e.g. `useCaseSliceIsolation` (static) or `latencySloP99` (runtime)."
+    },
+    "layer": {
+      "type": "string",
+      "enum": ["code", "contract", "runtime"],
+      "description": "Where in the delivery path the function ran: code = CI ArchUnit/OPA, contract = consumer-driven/JSON contract, runtime = production SLO/metric budget."
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["pass", "warn", "fail", "waived", "skipped"],
+      "description": "pass = clean; warn = violations but non-blocking (warn mode); fail = enforced violation (blocked); waived = enforced but time-boxed waiver active; skipped = n/a for this system."
+    },
+    "mode": {
+      "type": ["string", "null"],
+      "enum": ["enforce", "warn", "n/a", null],
+      "description": "The configured enforcement mode for this rule on this system (from the registry). Null for emitters with no registry concept."
+    },
+    "violations": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of violations. 0 on pass/skipped. For a runtime SLO, 0 = within budget, >=1 = over budget (e.g. number of breaching windows)."
+    },
+    "waiverExpires": {
+      "type": ["string", "null"],
+      "format": "date",
+      "description": "ISO date the active waiver expires (only on `waived`); null otherwise. Feeds the waiver-aging panel."
+    },
+    "ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Evaluation timestamp (RFC 3339 / ISO-8601, UTC)."
+    },
+    "source": {
+      "type": "string",
+      "description": "Emitter id, e.g. `ea-archrules`, `conftest`, `slo-exporter`. Lets the scorecard attribute results to a tier without inferring."
+    }
+  }
+}
