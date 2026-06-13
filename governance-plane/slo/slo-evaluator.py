@@ -79,12 +79,19 @@ def main():
             events.append(event(system, obj["id"], verdict, violations, now))
             shown = "no-data" if val is None else round(val, 4)
             print(f"{system}/{obj['id']}: {shown} vs {obj['threshold']} -> {verdict}", flush=True)
-            # drift: same query evaluated at a past time. No-op when there is no history yet.
-            if val is not None and val > 0:
+            # drift: same query evaluated at a past time. No-op when there is no history yet, or
+            # when the SLI is below `driftMin` — ratio-based drift on near-zero/idle values is noise
+            # (e.g. 7ms vs 4ms is >1.5x but meaningless), so a floor keeps it from false-warning.
+            drift_min = float(obj.get("driftMin", 0))
+            if val is not None and val > drift_min:
                 base = prom(obj["query"], at=baseline_at)
-                if base and base > 0 and val > base * (1 + DRIFT_PCT):
-                    events.append(event(system, obj["id"] + "Drift", "warn", 0, now))
-                    print(f"  drift: {round(val,4)} > {round(base,4)}*(1+{DRIFT_PCT}) -> warn", flush=True)
+                if base and base > drift_min:
+                    drifted = val > base * (1 + DRIFT_PCT)
+                    # Always emit (pass or warn) so the verdict self-clears — under the latest-per-rule
+                    # model a one-shot warn would otherwise linger after the drift subsides.
+                    events.append(event(system, obj["id"] + "Drift", "warn" if drifted else "pass", 0, now))
+                    if drifted:
+                        print(f"  drift: {round(val,4)} > {round(base,4)}*(1+{DRIFT_PCT}) -> warn", flush=True)
 
     data = json.dumps(events).encode()
     req = urllib.request.Request(GOV + "/verdicts", data=data, method="POST",

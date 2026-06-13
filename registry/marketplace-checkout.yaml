@@ -22,6 +22,7 @@ spec:
       threshold: 1.0
       warnAt: 0.5
       unit: s
+      driftMin: 0.05
     - id: workflowCompensationFailed
       query: 'sum(increase(msfw_workflow_runs_total{application="checkout-service",outcome="compensation_failed"}[1h]))'
       threshold: 1
