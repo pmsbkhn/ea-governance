@@ -3,8 +3,10 @@
 Independent home for the **evolutionary-architecture** program — the fitness functions, the
 registry, and the operating model that govern the system estate.
 
-> **New here?** [`docs/SYSTEM_VIEW.md`](docs/SYSTEM_VIEW.md) is the one-page bird's-eye view — the
-> three planes (build / governance / runtime), the verdict flow, and a component catalogue.
+> **New here?** [`docs/SYSTEM_VIEW.md`](docs/SYSTEM_VIEW.md) is the one-page bird's-eye view of the
+> governance program — the three planes (build / governance / runtime), the verdict flow, and a
+> component catalogue. For the **whole estate** (business runtime + platform + observability +
+> tracing + governance + CI) in one diagram, see [`docs/ESTATE_LANDSCAPE.md`](docs/ESTATE_LANDSCAPE.md).
 
 ## Why this is its own repo
 
