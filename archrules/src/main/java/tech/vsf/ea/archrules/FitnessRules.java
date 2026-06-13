@@ -4,11 +4,15 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
+
+import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
+import com.tngtech.archunit.library.dependencies.SliceRule;
 import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
 
 /**
@@ -44,9 +48,24 @@ public final class FitnessRules {
      * depend on each other — each vertical slice stays self-contained.
      */
     public static ArchRule useCaseSlicesDoNotCrossDepend(String sliceMatcher) {
-        return SlicesRuleDefinition.slices()
+        return useCaseSlicesDoNotCrossDepend(sliceMatcher, new String[0]);
+    }
+
+    /**
+     * Same, but dependencies whose <em>target</em> resides in a {@code sharedPackage} are ignored —
+     * for layouts where the slice matcher's {@code (*)} group also captures shared layers (domain,
+     * common) as peer "slices". A slice legitimately depends on the domain/common it is built on;
+     * only slice↔slice edges should fail. (Finding F-2: needed by the flat package layout where
+     * feature slices are siblings of {@code domain}; harmless where they are not.)
+     */
+    public static ArchRule useCaseSlicesDoNotCrossDepend(String sliceMatcher, String... sharedPackages) {
+        SliceRule rule = SlicesRuleDefinition.slices()
                 .matching(sliceMatcher)
-                .should().notDependOnEachOther()
+                .should().notDependOnEachOther();
+        if (sharedPackages.length > 0) {
+            rule = rule.ignoreDependency(DescribedPredicate.alwaysTrue(), resideInAnyPackage(sharedPackages));
+        }
+        return rule
                 .because("use-case slices must stay independent of one another (" + sliceMatcher + ")")
                 .as("use-case slices matching '" + sliceMatcher + "' do not depend on each other");
     }

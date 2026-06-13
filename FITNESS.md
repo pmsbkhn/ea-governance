@@ -42,7 +42,9 @@ Classification follows *Building Evolutionary Architectures* (Ford/Parsons/Kua):
   (slice-isolation enforceable cleanly); ecommerce keeps slices as **siblings of `domain`** under
   the service root, so the slice matcher also treats `domain` as a peer slice → false positives
   (`goodsflow → domain`). Enterprise implication: a fitness function is only as portable as the
-  conventions it assumes — the registry must record each system's **package-convention profile**,
-  and the rule needs a `shared/ignored packages` parameter (lib refinement, tracked).
+  conventions it assumes — the registry must record each system's **package-convention profile**.
+  **Resolved in lib:** `useCaseSlices(matcher, sharedPackages...)` ignores dependencies whose
+  target is a shared layer (domain/common) — ecommerce/inventory now reports exactly the one real
+  edge (`goodsflow → placeholder`), false positives gone, so the rule can be enforced there too.
 - **F-3 — msfw self-governance gap:** msfw's clean module graph is held by convention only; the
   `msfwModuleGraph` guardrail (run inside msfw's build, consuming this lib) is `warn` until wired.

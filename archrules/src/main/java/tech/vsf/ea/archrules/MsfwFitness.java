@@ -48,6 +48,15 @@ public final class MsfwFitness {
         return FitnessRules.useCaseSlicesDoNotCrossDepend(sliceMatcher);
     }
 
+    /**
+     * Use-case slices, ignoring legitimate dependencies on shared layers ({@code sharedPackages},
+     * e.g. {@code "<root>.domain..", "<root>.common.."}) — for the flat layout where feature slices
+     * sit as siblings of domain and the matcher would otherwise treat domain as a peer slice (F-2).
+     */
+    public static ArchRule useCaseSlices(String sliceMatcher, String... sharedPackages) {
+        return FitnessRules.useCaseSlicesDoNotCrossDepend(sliceMatcher, sharedPackages);
+    }
+
     public static ArchRule aggregatesEncapsulated() {
         return FitnessRules.noPublicSettersOn(AGGREGATE);
     }
