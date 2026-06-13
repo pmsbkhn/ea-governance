@@ -14,6 +14,14 @@ spec:
     aggregateEncapsulation: enforce
     entityEncapsulation: n/a
     stateWritersPublish: enforce
+    quantumSyncBoundary: enforce
+  # Architectural quantum: each marketplace service is its own quantum (own DB, async links).
+  # Checkout is the one orchestrator with SYNCHRONOUS cross-quantum calls; the architect declares
+  # exactly which quanta it may call synchronously — a new sync client to anything else fails the
+  # build (quantumSyncBoundary). This makes the quantum decision enforceable, not just documented.
+  quantum:
+    id: checkout
+    allowedSyncQuanta: [catalog, inventory, order, payment]
   waivers: []
   notes: "Value-object-only model: no msfw Entity subtypes (allowEmptyShould)."
   runtimeObjectives:

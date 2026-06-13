@@ -1,12 +1,17 @@
 package tech.vsf.ea.archrules;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
 
+import java.util.Locale;
+import java.util.Set;
+
 import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
@@ -119,6 +124,42 @@ public final class FitnessRules {
                 .should(annotatedWhenWritingState)
                 .because("state-writing use cases must publish through the outbox (@"
                         + simpleName(publishHandlerFqn) + ")")
+                .allowEmptyShould(true);
+    }
+
+    /**
+     * Architectural-quantum boundary (synchronous coupling). Every outbound synchronous client
+     * adapter — a class in {@code clientPackage} whose simple name ends in {@code clientSuffix}
+     * (e.g. {@code "ClientOa"}) — is a synchronous cross-quantum call. Its target quantum, derived
+     * from the name prefix lower-cased ({@code InventoryClientOa} → {@code "inventory"}), must be one
+     * the architect declared the service may call synchronously ({@code allowedQuanta}, from the
+     * registry). A new synchronous client to an undeclared quantum fails the build — the quantum
+     * boundary cannot widen silently. This turns the architect's quantum decision (which the tool
+     * cannot infer) into an enforceable invariant once it is declared.
+     */
+    public static ArchRule outboundSyncClientsStayWithinQuanta(String clientPackage,
+                                                               String clientSuffix,
+                                                               Set<String> allowedQuanta) {
+        ArchCondition<JavaClass> targetADeclaredQuantum =
+                new ArchCondition<>("target a declared sync quantum " + allowedQuanta) {
+                    @Override
+                    public void check(JavaClass clazz, ConditionEvents events) {
+                        String simple = clazz.getSimpleName();
+                        String quantum = simple.substring(0, simple.length() - clientSuffix.length())
+                                .toLowerCase(Locale.ROOT);
+                        if (!allowedQuanta.contains(quantum)) {
+                            events.add(SimpleConditionEvent.violated(clazz, simple
+                                    + " is a synchronous client to quantum '" + quantum
+                                    + "' which is not in the declared allowedSyncQuanta " + allowedQuanta));
+                        }
+                    }
+                };
+        return classes()
+                .that().resideInAPackage(clientPackage)
+                .and().haveSimpleNameEndingWith(clientSuffix)
+                .should(targetADeclaredQuantum)
+                .because("synchronous cross-quantum calls must be declared in the registry "
+                        + "(architectural quantum boundary)")
                 .allowEmptyShould(true);
     }
 

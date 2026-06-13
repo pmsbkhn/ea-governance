@@ -30,3 +30,5 @@ spec:
       query: 'sum(msfw_outbox_parked_events{application="notification-service"})'
       threshold: 1
       warnAt: 1
+  quantum:
+    id: notification
