@@ -65,5 +65,9 @@ Phase-2 promotion.
   `RegisterProductUc.execute` writes state via the repository but is **not** annotated
   `@EventPublishHandler` — a state change that does not go through the outbox (lost-event risk).
   Recorded as a waiver; `stateWritersPublish` kept at `warn` there until fixed.
+- **F-5 — real violation (harness discovery):** `ecommerce/inventory` `CreateStockReceiptUc` and
+  `RegisterProductUc` write state via the repository without `@EventPublishHandler` (same class as
+  F-4). Surfaced by the Phase-2 harness running `stateWritersPublish` in enforce; recorded as
+  `warn` + waiver. Two services now show this pattern → candidate for a framework-level nudge.
 - **F-3 — msfw self-governance gap:** msfw's clean module graph is held by convention only; the
   `msfwModuleGraph` guardrail now runs inside msfw's `domain-core` build (consuming this lib) — **wired, green**. Producer/consumer split check still pending (needs an aggregator module).

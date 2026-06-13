@@ -9,11 +9,11 @@ spec:
   pnl: ecommerce
   stack: java-msfw
   fitnessFunctions:
-    domainIsPure: warn
-    useCaseSliceIsolation: warn
-    aggregateEncapsulation: warn
-    entityEncapsulation: warn
-    stateWritersPublish: warn
+    domainIsPure: enforce
+    useCaseSliceIsolation: enforce
+    aggregateEncapsulation: enforce
+    entityEncapsulation: enforce
+    stateWritersPublish: warn  # F-4 waiver
   waivers:
     - rule: stateWritersPublish
       reason: "RegisterProductUc writes state but is not @EventPublishHandler (event not via outbox)"

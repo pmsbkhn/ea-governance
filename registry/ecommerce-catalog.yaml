@@ -9,10 +9,10 @@ spec:
   pnl: ecommerce
   stack: java-msfw
   fitnessFunctions:
-    domainIsPure: warn
-    useCaseSliceIsolation: warn
-    aggregateEncapsulation: warn
-    entityEncapsulation: warn
-    stateWritersPublish: warn
+    domainIsPure: enforce
+    useCaseSliceIsolation: enforce
+    aggregateEncapsulation: enforce
+    entityEncapsulation: enforce
+    stateWritersPublish: enforce
   waivers: []
   notes: "Adopting: no fitness functions yet; start in warn."
