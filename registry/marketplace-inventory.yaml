@@ -21,6 +21,7 @@ spec:
       threshold: 1.0
       warnAt: 0.5
       unit: s
+      driftMin: 0.05
     - id: outboxPendingLag
       query: 'sum(msfw_outbox_pending_events{application="inventory-service"})'
       threshold: 500
