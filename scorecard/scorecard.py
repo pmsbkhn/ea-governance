@@ -178,12 +178,69 @@ def write_html(path, by_system, by_pnl, reg, total):
 """)
 
 
+def to_exposition(events, reg):
+    """Render the verdict stream as Prometheus text — gauges keyed by system/P&L so the existing
+    Grafana/Prometheus can chart conformance alongside the runtime msfw.* metrics."""
+    by_system = rollup(events, lambda e: e["system"])
+    pnl = {s: reg.get(s, {}).get("pnl", "?") for s in by_system}
+    dom = {s: reg.get(s, {}).get("domain", "?") for s in by_system}
+    out = []
+
+    def header(name, help_, typ="gauge"):
+        out.append(f"# HELP {name} {help_}")
+        out.append(f"# TYPE {name} {typ}")
+
+    header("ea_fitness_evaluations", "Fitness evaluations by verdict")
+    for s, c in by_system.items():
+        for v in VERDICTS:
+            out.append(f'ea_fitness_evaluations{{system="{s}",pnl="{pnl[s]}",'
+                       f'domain="{dom[s]}",verdict="{v}"}} {c[v]}')
+
+    header("ea_conformance_ratio", "Pass / applicable per system (0..1)")
+    for s, c in by_system.items():
+        out.append(f'ea_conformance_ratio{{system="{s}",pnl="{pnl[s]}"}} {conformance(c) / 100:.4f}')
+
+    header("ea_enforced_violations", "Enforced (fail) verdicts per system")
+    for s, c in by_system.items():
+        out.append(f'ea_enforced_violations{{system="{s}",pnl="{pnl[s]}"}} {c["fail"]}')
+
+    total = collections.Counter()
+    for c in by_system.values():
+        total.update(c)
+    header("ea_cohort_conformance_ratio", "Cohort pass / applicable (0..1)")
+    out.append(f"ea_cohort_conformance_ratio {conformance(total) / 100:.4f}")
+    header("ea_systems_reported", "Systems that reported verdicts this run")
+    out.append(f"ea_systems_reported {len(by_system)}")
+
+    waivers = [e for e in events if e["verdict"] == "waived" and e.get("waiverExpires")]
+    if waivers:
+        header("ea_waiver_days_remaining", "Days until a waiver expires (negative = expired)")
+        today = date.today()
+        for e in waivers:
+            days = (datetime.fromisoformat(e["waiverExpires"]).date() - today).days
+            out.append(f'ea_waiver_days_remaining{{system="{e["system"]}",'
+                       f'rule="{e["rule"]}"}} {days}')
+    return "\n".join(out) + "\n"
+
+
+def push_prometheus(url, text):
+    import urllib.request
+    endpoint = url.rstrip("/") + "/metrics/job/ea_fitness"
+    req = urllib.request.Request(endpoint, data=text.encode(), method="PUT",
+                                 headers={"Content-Type": "text/plain"})
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        return resp.status
+
+
 def main():
     ap = argparse.ArgumentParser(description="EA conformance scorecard collector")
     ap.add_argument("ndjson", nargs="+", help="fitness-result NDJSON file(s) / globs")
     ap.add_argument("--registry", default=str(Path(__file__).parent.parent / "registry"),
                     help="registry directory (default: ../registry)")
     ap.add_argument("--html", help="also write a static HTML scorecard to this path")
+    ap.add_argument("--pushgateway", metavar="URL",
+                    help="PUT conformance metrics to this Prometheus Pushgateway "
+                         "(e.g. http://localhost:9091), under job=ea_fitness")
     args = ap.parse_args()
 
     events = load_events(args.ndjson)
@@ -191,6 +248,11 @@ def main():
         sys.exit("no verdict events found in: " + " ".join(args.ndjson))
     reg = load_registry(args.registry)
     failures = report(events, reg, args.html)
+
+    if args.pushgateway:
+        status = push_prometheus(args.pushgateway, to_exposition(events, reg))
+        print(f"\nPushed metrics to {args.pushgateway} (job=ea_fitness, HTTP {status})")
+
     sys.exit(1 if failures else 0)
 
 
