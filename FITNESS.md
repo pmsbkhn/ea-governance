@@ -4,6 +4,9 @@ The single source of truth for every architectural guardrail across the estate: 
 how it's classified, where it runs, and whether it is in `warn` or `enforce` mode. Making the
 implicit explicit is the management backbone — tooling comes after.
 
+> For each function's **type (Ford), deployment location, and lifecycle phase** (commit → CI →
+> deploy gate → production), see [`docs/FITNESS_LIFECYCLE.md`](docs/FITNESS_LIFECYCLE.md).
+
 Classification follows *Building Evolutionary Architectures* (Ford/Parsons/Kua):
 **atomic ↔ holistic** · **static ↔ dynamic** · **triggered ↔ continuous**.
 
