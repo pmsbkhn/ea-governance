@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -36,6 +37,11 @@ class FitnessHarnessEmitTest {
     private final List<FitnessResult> emitted = new ArrayList<>();
     private final FitnessHarness ea =
             FitnessHarness.forSystem("test-emit").withSink(emitted::add);
+
+    @Test
+    void reads_allowed_sync_quanta_from_registry() {
+        assertEquals(Set.of("inventory", "payment"), ea.allowedSyncQuanta());
+    }
 
     @Test
     void clean_rule_emits_pass() {

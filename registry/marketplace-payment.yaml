@@ -31,3 +31,5 @@ spec:
       query: 'sum(msfw_outbox_parked_events{application="payment-service"})'
       threshold: 1
       warnAt: 1
+  quantum:
+    id: payment

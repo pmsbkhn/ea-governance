@@ -11,3 +11,6 @@ spec:
   waivers:
     - rule: waivedRule
       expires: 2999-01-01
+  quantum:
+    id: test-emit
+    allowedSyncQuanta: [inventory, payment]

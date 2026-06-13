@@ -79,4 +79,16 @@ public final class MsfwFitness {
     public static ArchRule moduleStaysWithin(String modulePackage, String... forbiddenPackages) {
         return FitnessRules.packageDependsOnNothingOutward(modulePackage, forbiddenPackages);
     }
+
+    /**
+     * Architectural-quantum boundary (synchronous): the msfw convention puts synchronous outbound
+     * clients in {@code ..outbound.client..} named {@code <Quantum>ClientOa}. Each must target a
+     * quantum the architect declared the service may call synchronously ({@code allowedQuanta}, from
+     * the registry's {@code spec.quantum.allowedSyncQuanta}). Typically:
+     * {@code EA.evaluate("quantumSyncBoundary", MsfwFitness.quantumSyncBoundary(base, EA.allowedSyncQuanta()), classes)}.
+     */
+    public static ArchRule quantumSyncBoundary(String basePackage, java.util.Set<String> allowedQuanta) {
+        return FitnessRules.outboundSyncClientsStayWithinQuanta(
+                basePackage + "..outbound.client..", "ClientOa", allowedQuanta);
+    }
 }

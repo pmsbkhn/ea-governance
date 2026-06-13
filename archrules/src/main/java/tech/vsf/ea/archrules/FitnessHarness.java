@@ -4,8 +4,10 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.yaml.snakeyaml.Yaml;
 
@@ -40,13 +42,15 @@ public final class FitnessHarness {
     private final String systemId;
     private final Map<String, String> modes;          // ruleId -> enforce|warn|n/a
     private final Map<String, LocalDate> waivers;      // ruleId -> expiry
+    private final Set<String> allowedSyncQuanta;       // quanta this system may call synchronously
     private final FitnessResultSink sink;
 
     private FitnessHarness(String systemId, Map<String, String> modes, Map<String, LocalDate> waivers,
-                           FitnessResultSink sink) {
+                           Set<String> allowedSyncQuanta, FitnessResultSink sink) {
         this.systemId = systemId;
         this.modes = modes;
         this.waivers = waivers;
+        this.allowedSyncQuanta = allowedSyncQuanta;
         this.sink = sink;
     }
 
@@ -55,7 +59,16 @@ public final class FitnessHarness {
      * default — for tests (a recording sink) or a pipeline wiring its own transport.
      */
     public FitnessHarness withSink(FitnessResultSink sink) {
-        return new FitnessHarness(systemId, modes, waivers, sink);
+        return new FitnessHarness(systemId, modes, waivers, allowedSyncQuanta, sink);
+    }
+
+    /**
+     * The quanta this system is declared (in {@code spec.quantum.allowedSyncQuanta}) to call
+     * synchronously — the architect's quantum-boundary decision, for {@code quantumSyncBoundary}.
+     * Empty when none declared.
+     */
+    public Set<String> allowedSyncQuanta() {
+        return allowedSyncQuanta;
     }
 
     @SuppressWarnings("unchecked")
@@ -86,8 +99,18 @@ public final class FitnessHarness {
                     }
                 }
             }
+            Set<String> allowedSyncQuanta = new LinkedHashSet<>();
+            Object q = spec.get("quantum");
+            if (q instanceof Map) {
+                Object allowed = ((Map<String, Object>) q).get("allowedSyncQuanta");
+                if (allowed instanceof List) {
+                    for (Object item : (List<Object>) allowed) {
+                        allowedSyncQuanta.add(String.valueOf(item).trim().toLowerCase(java.util.Locale.ROOT));
+                    }
+                }
+            }
             return new FitnessHarness(systemId, modes, Collections.unmodifiableMap(waivers),
-                    FitnessResultSink.discover());
+                    Collections.unmodifiableSet(allowedSyncQuanta), FitnessResultSink.discover());
         } catch (java.io.IOException e) {
             throw new IllegalStateException("Cannot read EA registry entry " + resource, e);
         }
