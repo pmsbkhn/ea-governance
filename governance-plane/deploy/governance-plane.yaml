@@ -1,0 +1,81 @@
+# Governance plane (ADR 0001) — durable verdict store + scorecard, in its OWN namespace,
+# separate from prod observability (infra/Prometheus). Not a Prometheus scrape target by design:
+# conformance is governance data, it lands here, not in prod Prometheus.
+#
+# The gov-server / gov-registry ConfigMaps are created by deploy.sh (from server.py and the live
+# registry/), so server.py stays a first-class, testable file rather than YAML-embedded.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: governance
+  labels: { plane: governance }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gov-data
+  namespace: governance
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: governance-plane
+  namespace: governance
+  labels: { app: governance-plane }
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate          # single writer over the RWO PVC
+  selector:
+    matchLabels: { app: governance-plane }
+  template:
+    metadata:
+      labels: { app: governance-plane }
+    spec:
+      containers:
+        - name: governance-plane
+          image: python:3.12-slim
+          command: ["python3", "/app/server.py"]
+          env:
+            - { name: DB_PATH,       value: /data/governance.db }
+            - { name: REGISTRY_PATH, value: /app/registry.json }
+            - { name: PORT,          value: "8080" }
+          ports:
+            - containerPort: 8080
+          resources:
+            requests: { cpu: 25m, memory: 64Mi }
+            limits:   { cpu: 250m, memory: 256Mi }
+          readinessProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            periodSeconds: 15
+          volumeMounts:
+            - { name: server,   mountPath: /app/server.py,    subPath: server.py }
+            - { name: registry, mountPath: /app/registry.json, subPath: registry.json }
+            - { name: data,     mountPath: /data }
+      volumes:
+        - name: server
+          configMap: { name: gov-server }
+        - name: registry
+          configMap: { name: gov-registry }
+        - name: data
+          persistentVolumeClaim: { claimName: gov-data }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: governance-plane
+  namespace: governance
+  labels: { app: governance-plane }
+spec:
+  selector: { app: governance-plane }
+  ports:
+    - port: 8080
+      targetPort: 8080
