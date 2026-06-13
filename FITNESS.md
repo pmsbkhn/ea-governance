@@ -19,7 +19,7 @@ Classification follows *Building Evolutionary Architectures* (Ford/Parsons/Kua):
 | `msfwModuleGraph` | msfw module purity (domain-core ∌ Spring; producer ∌ consumer) | atomic · static · triggered | msfw CI (planned) | warn | platform |
 | `jsonEventContract` | producer wire-envelope ↔ consumer DTO bind (fixtures) | holistic · static · triggered | service CI (existing `JsonEventContract`) | enforce | platform |
 | `outboxParked` / `pollerStuck` / `deadLettering` / `workflowCompensationFailed` | runtime invariants of the msfw metric set | holistic · dynamic · **continuous** | Prometheus alerts (`ops/observability`) | enforce | platform-ops |
-| `manifestPolicy` | k8s manifests: scrape annotation, resource limits, probes, internal image | atomic · static · triggered | OPA/conftest + Kyverno (planned, Phase 3) | warn | platform-ops |
+| `manifestPolicy` | k8s manifests: resource limits, no :latest, probes, scrape annotation | atomic · static · triggered | OPA/conftest (`make policy`); Kyverno admission (planned) | deny+warn | platform-ops |
 
 \* `enforce` where the package convention supports it (see finding F-2).
 
@@ -67,7 +67,7 @@ Phase-2 promotion.
   Recorded as a waiver; `stateWritersPublish` kept at `warn` there until fixed.
 - **F-5 — real violation (harness discovery):** `ecommerce/inventory` `CreateStockReceiptUc` and
   `RegisterProductUc` write state via the repository without `@EventPublishHandler` (same class as
-  F-4). Surfaced by the Phase-2 harness running `stateWritersPublish` in enforce; recorded as
-  `warn` + waiver. Two services now show this pattern → candidate for a framework-level nudge.
+  F-4). Surfaced by the Phase-2 harness. **Fixed** — both use-cases now carry `@EventPublishHandler`
+  (inventory's adapter already wires OutboxConfiguration); `stateWritersPublish` back to enforce.
 - **F-3 — msfw self-governance gap:** msfw's clean module graph is held by convention only; the
   `msfwModuleGraph` guardrail now runs inside msfw's `domain-core` build (consuming this lib) — **wired, green**. Producer/consumer split check still pending (needs an aggregator module).

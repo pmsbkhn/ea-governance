@@ -13,14 +13,10 @@ spec:
     useCaseSliceIsolation: warn  # F-1 waiver
     aggregateEncapsulation: enforce
     entityEncapsulation: enforce
-    stateWritersPublish: warn  # F-5 waiver
+    stateWritersPublish: enforce
   waivers:
     - rule: useCaseSliceIsolation
       reason: "goodsflow depends on placeholder.KafkaDirectPublisher (temporary msfw-migration stub)"
       expires: 2026-09-30
       ticket: F-1
-    - rule: stateWritersPublish
-      reason: "CreateStockReceiptUc + RegisterProductUc write state without @EventPublishHandler"
-      expires: 2026-09-30
-      ticket: F-5
   notes: "Flat package layout (slices are siblings of domain) → slice rule needs shared-package scoping (F-2)."
