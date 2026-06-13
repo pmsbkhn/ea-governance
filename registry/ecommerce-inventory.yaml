@@ -1,0 +1,22 @@
+apiVersion: ea/v1
+kind: System
+metadata:
+  id: ecommerce-inventory
+  repo: ecommerce-msfw/inventory
+spec:
+  owner: team-ecom-inventory
+  domain: inventory
+  pnl: ecommerce
+  stack: java-msfw
+  fitnessFunctions:
+    domainIsPure: warn
+    useCaseSliceIsolation: warn
+    aggregateEncapsulation: warn
+    entityEncapsulation: warn
+    stateWritersPublish: warn
+  waivers:
+    - rule: useCaseSliceIsolation
+      reason: "goodsflow depends on placeholder.KafkaDirectPublisher (temporary msfw-migration stub)"
+      expires: 2026-09-30
+      ticket: F-1
+  notes: "Flat package layout (slices are siblings of domain) → slice rule needs shared-package scoping (F-2)."

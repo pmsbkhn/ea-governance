@@ -1,0 +1,18 @@
+apiVersion: ea/v1
+kind: System
+metadata:
+  id: ecommerce-catalog
+  repo: ecommerce-msfw/catalog
+spec:
+  owner: team-ecom-catalog
+  domain: catalog
+  pnl: ecommerce
+  stack: java-msfw
+  fitnessFunctions:
+    domainIsPure: warn
+    useCaseSliceIsolation: warn
+    aggregateEncapsulation: warn
+    entityEncapsulation: warn
+    stateWritersPublish: warn
+  waivers: []
+  notes: "Adopting: no fitness functions yet; start in warn."

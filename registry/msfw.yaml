@@ -1,0 +1,14 @@
+apiVersion: ea/v1
+kind: System
+metadata:
+  id: msfw
+  repo: msfw
+spec:
+  owner: platform
+  domain: framework
+  pnl: platform
+  stack: java-msfw-framework
+  fitnessFunctions:
+    msfwModuleGraph: warn
+  waivers: []
+  notes: "The framework itself; module-graph guardrail, not service rules."

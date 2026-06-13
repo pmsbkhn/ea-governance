@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>tech.vsf.ea</groupId>
+    <artifactId>ea-archrules</artifactId>
+    <version>0.1.0</version>
+    <packaging>jar</packaging>
+
+    <name>EA Architecture Rules</name>
+    <description>Reusable, framework-agnostic ArchUnit fitness functions for the evolutionary-architecture
+        program. Governs the systems it audits but depends on NONE of them: every framework concept
+        (annotations, base types, package conventions) is referenced by fully-qualified NAME string, so
+        this library has zero compile dependency on msfw or any consuming service. Consumed at test scope;
+        the consuming repo brings JUnit 5 + archunit-junit5.</description>
+
+    <properties>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <archunit.version>1.3.0</archunit.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit</artifactId>
+            <version>${archunit.version}</version>
+        </dependency>
+    </dependencies>
+</project>

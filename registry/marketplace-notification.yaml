@@ -1,0 +1,17 @@
+apiVersion: ea/v1
+kind: System
+metadata:
+  id: marketplace-notification
+  repo: marketplace-aigen/notification
+spec:
+  owner: team-mp-notification
+  domain: notification
+  pnl: marketplace
+  stack: java-msfw
+  fitnessFunctions:
+    domainIsPure: enforce
+    useCaseSliceIsolation: enforce
+    aggregateEncapsulation: enforce
+    entityEncapsulation: enforce
+    stateWritersPublish: enforce
+  waivers: []

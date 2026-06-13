@@ -1,0 +1,18 @@
+apiVersion: ea/v1
+kind: System
+metadata:
+  id: ecommerce-order-management
+  repo: ecommerce-msfw/order-management
+spec:
+  owner: team-ecom-oms
+  domain: order
+  pnl: ecommerce
+  stack: java-msfw
+  fitnessFunctions:
+    domainIsPure: warn
+    useCaseSliceIsolation: warn
+    aggregateEncapsulation: warn
+    entityEncapsulation: warn
+    stateWritersPublish: warn
+  waivers: []
+  notes: "Adopting."

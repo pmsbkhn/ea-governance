@@ -1,0 +1,18 @@
+apiVersion: ea/v1
+kind: System
+metadata:
+  id: marketplace-order
+  repo: marketplace-aigen/order
+spec:
+  owner: team-mp-order
+  domain: order
+  pnl: marketplace
+  stack: java-msfw
+  fitnessFunctions:
+    domainIsPure: enforce
+    useCaseSliceIsolation: enforce
+    aggregateEncapsulation: enforce
+    entityEncapsulation: enforce
+    stateWritersPublish: enforce
+  waivers: []
+  notes: "Migrated to shared archrules library (canary)."

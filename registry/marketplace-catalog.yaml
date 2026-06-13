@@ -1,0 +1,17 @@
+apiVersion: ea/v1
+kind: System
+metadata:
+  id: marketplace-catalog
+  repo: marketplace-aigen/catalog
+spec:
+  owner: team-mp-catalog
+  domain: catalog
+  pnl: marketplace
+  stack: java-msfw
+  fitnessFunctions:
+    domainIsPure: enforce
+    useCaseSliceIsolation: enforce
+    aggregateEncapsulation: enforce
+    entityEncapsulation: enforce
+    stateWritersPublish: enforce
+  waivers: []
