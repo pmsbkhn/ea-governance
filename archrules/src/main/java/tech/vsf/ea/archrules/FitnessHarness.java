@@ -40,11 +40,22 @@ public final class FitnessHarness {
     private final String systemId;
     private final Map<String, String> modes;          // ruleId -> enforce|warn|n/a
     private final Map<String, LocalDate> waivers;      // ruleId -> expiry
+    private final FitnessResultSink sink;
 
-    private FitnessHarness(String systemId, Map<String, String> modes, Map<String, LocalDate> waivers) {
+    private FitnessHarness(String systemId, Map<String, String> modes, Map<String, LocalDate> waivers,
+                           FitnessResultSink sink) {
         this.systemId = systemId;
         this.modes = modes;
         this.waivers = waivers;
+        this.sink = sink;
+    }
+
+    /**
+     * A copy of this harness that emits every evaluation to {@code sink} instead of the process
+     * default — for tests (a recording sink) or a pipeline wiring its own transport.
+     */
+    public FitnessHarness withSink(FitnessResultSink sink) {
+        return new FitnessHarness(systemId, modes, waivers, sink);
     }
 
     @SuppressWarnings("unchecked")
@@ -75,7 +86,8 @@ public final class FitnessHarness {
                     }
                 }
             }
-            return new FitnessHarness(systemId, modes, Collections.unmodifiableMap(waivers));
+            return new FitnessHarness(systemId, modes, Collections.unmodifiableMap(waivers),
+                    FitnessResultSink.discover());
         } catch (java.io.IOException e) {
             throw new IllegalStateException("Cannot read EA registry entry " + resource, e);
         }
@@ -96,23 +108,39 @@ public final class FitnessHarness {
     public void evaluate(String ruleId, ArchRule rule, JavaClasses classes) {
         String mode = modes.getOrDefault(ruleId, "enforce");
         if ("n/a".equals(mode)) {
+            emit(ruleId, FitnessResult.Verdict.SKIPPED, mode, 0, null);
             return;
         }
         EvaluationResult result = rule.evaluate(classes);
         if (!result.hasViolation()) {
+            emit(ruleId, FitnessResult.Verdict.PASS, mode, 0, null);
             return;
         }
+        int n = result.getFailureReport().getDetails().size();
         LocalDate waiverExpiry = waivers.get(ruleId);
         boolean waived = waiverExpiry != null && !waiverExpiry.isBefore(LocalDate.now());
         if ("warn".equals(mode) || waived) {
-            int n = result.getFailureReport().getDetails().size();
+            emit(ruleId, waived ? FitnessResult.Verdict.WAIVED : FitnessResult.Verdict.WARN,
+                    mode, n, waived ? waiverExpiry : null);
             System.out.println("[EA WARN] " + systemId + "/" + ruleId + ": " + n
                     + " violation(s) — not blocking"
                     + (waived ? " (waiver until " + waiverExpiry + ")" : "")
                     + "\n" + result.getFailureReport());
             return;
         }
+        emit(ruleId, FitnessResult.Verdict.FAIL, mode, n, null);
         throw new AssertionError("[EA ENFORCE] " + systemId + "/" + ruleId + " failed\n"
                 + result.getFailureReport());
+    }
+
+    private void emit(String ruleId, FitnessResult.Verdict verdict, String mode, int violations,
+                      LocalDate waiverExpires) {
+        try {
+            sink.emit(FitnessResult.code(systemId, ruleId, verdict, mode, violations, waiverExpires));
+        } catch (RuntimeException e) {
+            // A scorecard transport must never turn a green build red — observability is best-effort.
+            System.err.println("[EA] fitness-result sink failed for " + systemId + "/" + ruleId
+                    + ": " + e);
+        }
     }
 }

@@ -1,0 +1,13 @@
+apiVersion: ea/v1
+kind: System
+metadata:
+  id: test-emit
+  name: Fitness-result emission fixture
+spec:
+  # Fixture for FitnessHarnessEmitTest — exercises every verdict path.
+  fitnessFunctions:
+    warnRule: warn
+    naRule: n/a
+  waivers:
+    - rule: waivedRule
+      expires: 2999-01-01

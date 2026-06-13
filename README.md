@@ -27,11 +27,18 @@ Governance must not be owned by the things it governs. This repo therefore:
 
 ```
 archrules/   # reusable ArchUnit fitness functions (Java lib, zero-dep, FQN-string)
-             #   FitnessRules  — stack-agnostic, fully parameterized
-             #   MsfwFitness   — the msfw-cohort profile (binds msfw FQNs as strings)
+             #   FitnessRules   — stack-agnostic, fully parameterized
+             #   MsfwFitness    — the msfw-cohort profile (binds msfw FQNs as strings)
+             #   FitnessHarness — registry-driven warn→enforce; emits a FitnessResult per evaluation
+             #   FitnessResult/Sink — the verdict contract that feeds the portfolio scorecard
 registry/    # one YAML per system: owner / domain / P&L / stack / fitness-functions + mode / waivers
+docs/        # fitness-result.md + .schema.json — the cross-tier verdict contract (code/contract/runtime)
 FITNESS.md   # the catalog: every guardrail, its Ford classification, where it runs, its warn/enforce state
 ```
+
+The scorecard that turns all this into a per-P&L conformance view is fed by one flat verdict event
+emitted on every evaluation — static (this harness) and dynamic (SLO) tiers share the same shape.
+See [`docs/fitness-result.md`](docs/fitness-result.md).
 
 ## Trajectory (local experiment → 700-system estate)
 
