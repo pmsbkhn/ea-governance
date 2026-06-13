@@ -91,4 +91,18 @@ public final class MsfwFitness {
         return FitnessRules.outboundSyncClientsStayWithinQuanta(
                 basePackage + "..outbound.client..", "ClientOa", allowedQuanta);
     }
+
+    public static final String EVENT_SOURCED_REPOSITORY =
+            "tech.vsf.ptnt.msfw.domain.eventsourcing.EventSourcedRepository";
+
+    /**
+     * Event-sourcing quantum boundary: an event-sourced aggregate's event store stays inside its
+     * quantum — its {@code EventSourcedRepository} must not synchronously reach another quantum
+     * ({@code ..outbound.client..}); the stream is rehydrated/persisted in-process (the aggregate's
+     * own data). Command side + query side + event store = one quantum.
+     */
+    public static ArchRule eventStoreInQuantum(String basePackage) {
+        return FitnessRules.eventStorePersistenceStaysInQuantum(
+                EVENT_SOURCED_REPOSITORY, basePackage + "..outbound.client..");
+    }
 }

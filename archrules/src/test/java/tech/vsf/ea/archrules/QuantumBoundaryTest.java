@@ -40,4 +40,16 @@ class QuantumBoundaryTest {
 
         assertFalse(r.hasViolation());
     }
+
+    @Test
+    void event_store_must_not_reach_another_quantum() {
+        EvaluationResult r = FitnessRules
+                .eventStorePersistenceStaysInQuantum(
+                        "tech.vsf.ea.archrules.fixtures.esrepo.FakeRepo", CLIENT_PKG)
+                .evaluate(CLASSES);
+
+        assertTrue(r.hasViolation(), "LeakyRepo persists via a cross-quantum client");
+        assertTrue(r.getFailureReport().toString().contains("LeakyRepo"));
+        assertFalse(r.getFailureReport().toString().contains("CleanRepo"));
+    }
 }
