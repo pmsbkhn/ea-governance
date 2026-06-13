@@ -14,6 +14,8 @@ spec:
     aggregateEncapsulation: enforce
     entityEncapsulation: enforce
     stateWritersPublish: enforce
+    quantumSyncBoundary: enforce
+    eventStoreInQuantum: enforce
   waivers: []
   notes: "stateWritersPublish uses isAssignableTo (port extensions) — now the lib default."
   runtimeObjectives:
@@ -33,3 +35,6 @@ spec:
       warnAt: 1
   quantum:
     id: payment
+    # Payment is event-driven (consumes/produces via Kafka); it makes NO synchronous cross-quantum
+    # calls, so its escrow event store stays inside the Payment quantum.
+    allowedSyncQuanta: []

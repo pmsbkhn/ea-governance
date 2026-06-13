@@ -163,6 +163,21 @@ public final class FitnessRules {
                 .allowEmptyShould(true);
     }
 
+    /**
+     * Event-sourcing quantum boundary: an aggregate's event store is its own data and must stay
+     * inside its quantum. A class assignable to {@code repositoryFqn} (the event-sourced repository)
+     * must not depend on a synchronous cross-quantum client ({@code clientPackage}) — the event
+     * stream is rehydrated/persisted in-process, never by synchronously calling another quantum.
+     */
+    public static ArchRule eventStorePersistenceStaysInQuantum(String repositoryFqn, String clientPackage) {
+        return noClasses()
+                .that().areAssignableTo(repositoryFqn)
+                .should().dependOnClassesThat().resideInAPackage(clientPackage)
+                .because("an event-sourced aggregate's event store must stay inside its quantum "
+                        + "(no synchronous cross-quantum persistence)")
+                .allowEmptyShould(true);
+    }
+
     private static String simpleName(String fqn) {
         int dot = fqn.lastIndexOf('.');
         return dot < 0 ? fqn : fqn.substring(dot + 1);
