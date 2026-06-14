@@ -1,0 +1,47 @@
+name: Quantum graph
+
+# Centralized, static whole-estate quantum sync-boundary check: clones every governed repo and
+# verifies each system's synchronous outbound clients against its allowedSyncQuanta in the registry —
+# one place catches any bounded context that sync-calls a quantum it wasn't granted, independent of
+# that service's own CI. See quantum/README.md.
+#
+# Prerequisite: repo secret GH_REPO_PAT (PAT with contents:read on the governed repos) to clone them.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  quantum-graph:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        run: pip install pyyaml
+
+      - name: Clone governed repos
+        env:
+          GH_REPO_PAT: ${{ secrets.GH_REPO_PAT }}
+        run: |
+          mkdir -p workspace
+          for repo in marketplace-aigen ecommerce-msfw msfw; do
+            git clone --depth 1 "https://x-access-token:${GH_REPO_PAT}@github.com/${{ github.repository_owner }}/$repo.git" "workspace/$repo" \
+              || echo "::warning::could not clone $repo (skipped)"
+          done
+
+      - name: Whole-graph quantum check
+        run: python3 quantum/check.py --workspace workspace --registry registry --emit quantum-results.ndjson
+
+      - name: Upload verdicts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quantum-graph-results
+          path: quantum-results.ndjson
