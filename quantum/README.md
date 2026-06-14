@@ -33,3 +33,10 @@ runtime tier (ZTA PEP / trace-based) is for. It also assumes the repos are prese
 `.github/workflows/quantum-graph.yml` clones the governed repos and runs the check on every push/PR.
 Requires a repo secret **`GH_REPO_PAT`** (a PAT with `contents: read` on the governed repos) to clone
 them — `GITHUB_TOKEN` can't read sibling repos.
+
+## Operating model
+
+This whole-graph check is the **estate safety net**, complementing the caller-side `quantumSyncBoundary`
+(per-PR, per repo) and the future runtime PEP (ZTA). Who owns each tier, when each runs, how the
+registry's `allowedSyncQuanta` is change-controlled, and the warn→enforce / waiver process are defined in
+[ADR 0002 — Quantum governance operating model](../docs/adr/0002-quantum-governance-operating-model.md).

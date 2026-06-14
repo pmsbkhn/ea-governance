@@ -5,3 +5,4 @@ target/
 # Python bytecode cache (scorecard collector)
 __pycache__/
 *.pyc
+.DS_Store

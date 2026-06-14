@@ -65,24 +65,31 @@ emitter produces. Dotted arrows are reads / config.
   cross-cohort scorecard + a Backstage-ready API. Static and runtime verdicts **meet only here**,
   keyed on the registry `system` id.
 
-## Four enforcement tiers
+## Five enforcement tiers
 
 | Tier | Where it runs | Emitter | Catches |
 |---|---|---|---|
-| **code** | CI (ArchUnit via `ea-archrules`) | `FitnessHarness` | architecture / module-graph violations |
+| **code** | CI (ArchUnit via `ea-archrules`), per repo | `FitnessHarness` | architecture / module-graph / **caller-side quantum boundary** violations |
 | **contract** | CI (JSON fixtures, `msfw-test`) | producer/consumer tests | event payload drift |
+| **whole-graph** | central / nightly (ea-governance `quantum/check.py`) | `quantum-graph.yml` | **any cross-quantum sync edge in the estate** not in the registry — even from repos that never adopted the code tier |
 | **runtime** | prod (Prometheus → SLO) | `slo-evaluator` | latency / lag / saturation, **drift** |
 | **registry** | cuts across all | — | warn→enforce mode, time-boxed waivers, coverage |
+
+> The code and whole-graph tiers enforce the **same** quantum boundary at two coverage points (fast
+> per-PR vs estate-wide safety net); runtime enforcement of the actual call is the future PEP tier (ZTA).
+> Their operating model — ownership, cadence, change-control, waivers — is
+> [ADR 0002](adr/0002-quantum-governance-operating-model.md).
 
 ## Component catalogue
 
 | Component | Path | Role | Status |
 |---|---|---|---|
-| **FitnessRules** | `archrules/.../FitnessRules.java` | generic, stack-agnostic ArchUnit rules | published `0.3.0` |
-| **MsfwFitness** | `archrules/.../MsfwFitness.java` | msfw-cohort profile (binds msfw FQNs as strings) | published |
+| **FitnessRules** | `archrules/.../FitnessRules.java` | generic, stack-agnostic ArchUnit rules (incl. `outboundSyncClientsStayWithinQuanta`, `eventStorePersistenceStaysInQuantum`) | published `0.5.0` |
+| **MsfwFitness** | `archrules/.../MsfwFitness.java` | msfw-cohort profile (binds msfw FQNs as strings; `quantumSyncBoundary`, `eventStoreInQuantum`) | published |
+| **quantum whole-graph check** | `quantum/check.py` + `quantum-graph.yml` | clones the estate, enforces cross-quantum sync edges against the registry from one place | prototype |
 | **FitnessHarness** | `archrules/.../FitnessHarness.java` | registry-driven warn→enforce; emits a verdict per eval | published |
 | **FitnessResult / Sink** | `archrules/.../FitnessResult*.java` | the verdict contract + sink SPI (NOOP / stdout / ServiceLoader) | published |
-| **registry** | `registry/*.yaml` | SSOT: owner/domain/P&L, per-rule mode, waivers, `runtimeObjectives` | YAML (→ catalog at scale) |
+| **registry** | `registry/*.yaml` | SSOT: owner/domain/P&L, per-rule mode, waivers, `runtimeObjectives`, `quantum.{id,allowedSyncQuanta}` | YAML (→ catalog at scale) |
 | **fitness-result contract** | `docs/fitness-result.{md,schema.json}` | the one flat event shape (code/contract/runtime) | v1 |
 | **scorecard collector** | `scorecard/scorecard.py` | NDJSON + registry → conformance report / HTML / `--pushgateway` | CLI |
 | **governance-plane** | `governance-plane/server.py` + `deploy/` | durable store (SQLite/PVC) + scorecard + `/api/conformance`, ns `governance` | prototype |

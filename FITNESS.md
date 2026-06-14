@@ -19,6 +19,9 @@ Classification follows *Building Evolutionary Architectures* (Ford/Parsons/Kua):
 | `aggregateEncapsulation` | no public `setX` on `Aggregate` subtypes | atomic · static · triggered | service CI | enforce | platform-arch |
 | `entityEncapsulation` | no public `setX` on `Entity` subtypes | atomic · static · triggered | service CI | enforce | platform-arch |
 | `stateWritersPublish` | `*Uc` methods that `save`/`delete` carry `@EventPublishHandler` | atomic · static · triggered | service CI | enforce | platform-arch |
+| `quantumSyncBoundary` | a `..outbound.client..` only calls quanta in the registry's `allowedSyncQuanta` | atomic · static · triggered | service CI (caller-side) | enforce | platform-arch |
+| `eventStoreInQuantum` | an `EventSourcedRepository` never reaches a cross-quantum `..outbound.client..` | atomic · static · triggered | service CI | enforce | platform-arch |
+| `quantumGraphSyncBoundary` | **whole-graph**: no cross-quantum sync edge in the *whole estate* unless the registry grants it | holistic · static · triggered | ea-governance central CI / nightly (`quantum/check.py`) | warn→enforce | platform |
 | `msfwModuleGraph` | msfw module purity (domain-core ∌ Spring; producer ∌ consumer) | atomic · static · triggered | msfw CI (planned) | warn | platform |
 | `jsonEventContract` | producer wire-envelope ↔ consumer DTO bind (fixtures) | holistic · static · triggered | service CI (existing `JsonEventContract`) | enforce | platform |
 | `outboxParked` / `pollerStuck` / `deadLettering` / `workflowCompensationFailed` | runtime invariants of the msfw metric set | holistic · dynamic · **continuous** | Prometheus alerts (`ops/observability`) | enforce | platform-ops |
