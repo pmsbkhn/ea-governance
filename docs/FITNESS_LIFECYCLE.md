@@ -33,6 +33,9 @@ flowchart LR
   subgraph P4["4 · Production (runtime)"]
     S["slo-evaluator CronJob (5m)<br/>SLO + drift over Prometheus"]:::run
   end
+  subgraph PG["central · estate scan (nightly)"]
+    Q["quantum/check.py<br/>whole-graph sync boundary"]:::code
+  end
 
   GP["governance-plane<br/>verdict store + scorecard"]:::store
 
@@ -42,6 +45,7 @@ flowchart LR
   C -.->|"FitnessResult (contract)"| GP
   O -.->|"FitnessResult"| GP
   S -.->|"FitnessResult (runtime)"| GP
+  Q -.->|"FitnessResult (quantum-graph)"| GP
 ```
 
 ## Catalogue
@@ -57,12 +61,37 @@ Deployed as each repo's `…/architecture/FitnessFunctionsTest` (runs on every `
 | `aggregateEncapsulation` | atomic · static · triggered | public setters on an Aggregate | enforce |
 | `entityEncapsulation` | atomic · static · triggered | public setters on an Entity | enforce |
 | `stateWritersPublish` | atomic · static · triggered | state-writing use-case not `@EventPublishHandler` | enforce (warn+waiver where adopting) |
+| `quantumSyncBoundary` | atomic · static · triggered | a `..outbound.client..` calling a quantum **not** in the system's registry `allowedSyncQuanta` | enforce |
+| `eventStoreInQuantum` | atomic · static · triggered | an `EventSourcedRepository` reaching a cross-quantum `..outbound.client..` (event store escaping its quantum) | enforce |
 | `msfwModuleGraph` (`moduleStaysWithin`) | holistic · static · triggered | the framework's own domain-core purity | enforce (`-Pfitness`) |
+
+> **Caller-side quantum rules** read `spec.quantum.allowedSyncQuanta` from the registry — the architect
+> declares each quantum's permitted synchronous neighbours there (SSOT), and the rule enforces it in the
+> caller's own PR. They give *fast, local* feedback but only cover repos that adopt the harness; the
+> whole-graph tier below is the estate-wide safety net.
 
 ### Static · contract tier — phase: **CI** (`msfw-test`)
 | Function | Ford type | Where | Catches |
 |---|---|---|---|
 | `JsonEventContract` | atomic · static · triggered | producer & consumer unit tests | JSON event payload drift between services |
+
+### Static · whole-graph tier — phase: **central CI / nightly** (`quantum/check.py`)
+Runs in **ea-governance** itself (`.github/workflows/quantum-graph.yml`): clones every registered repo
+into a workspace (`GH_REPO_PAT`, contents:read), reads each system's `quantum.id` + `allowedSyncQuanta`
+from the registry, scans all `**/outbound/client/*ClientOa.java` across the estate, and fails if any
+quantum makes a synchronous call to a quantum it was not granted — caught from **one place**, even if
+the offending repo never adopted the caller-side harness. Emits `FitnessResult` (`rule:
+quantumGraphSyncBoundary`, `source: quantum-graph`).
+
+| Function | Ford type | Catches | Action |
+|---|---|---|---|
+| `quantumGraphSyncBoundary` | holistic · static · triggered | any cross-quantum synchronous edge in the **whole** estate graph not allowed by the registry | **fail** (estate-wide) |
+
+> Caller-side (`quantumSyncBoundary`) and whole-graph are the **same boundary, two coverage models**:
+> the first is fast per-PR feedback owned by each team; the second is the estate safety net owned by the
+> platform/governance team. They complement — not replace — each other, and both defer *runtime*
+> enforcement of the actual call to the future PEP tier (ZTA). See
+> [ADR 0002](adr/0002-quantum-governance-operating-model.md) for who owns what and when each runs.
 
 ### Static · manifest tier — phase: **deploy gate** (OPA/conftest)
 Deployed as `marketplace-aigen/deploy/policy/kubernetes.rego`, run by `make policy` / CI.
@@ -101,6 +130,7 @@ Not a fitness function itself but the **mode + waiver engine** that wraps all of
 |---|---|---|---|
 | Commit | code | `mvn test` locally | static |
 | CI (PR/merge) | code + contract | GitHub Actions `fitness.yml` per repo | static |
+| Central / nightly | whole-graph | ea-governance `quantum-graph.yml` (clones the estate) | static, holistic |
 | Deploy gate | manifest | OPA/conftest (`make policy`) | static |
 | Production | runtime | slo-evaluator CronJob → Prometheus | dynamic, continuous |
 

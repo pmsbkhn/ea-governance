@@ -37,7 +37,12 @@ archrules/   # reusable ArchUnit fitness functions (Java lib, zero-dep, FQN-stri
              #   FitnessHarness — registry-driven warn→enforce; emits a FitnessResult per evaluation
              #   FitnessResult/Sink — the verdict contract that feeds the portfolio scorecard
 registry/    # one YAML per system: owner / domain / P&L / stack / fitness-functions + mode / waivers
-docs/        # fitness-result.md + .schema.json — the cross-tier verdict contract (code/contract/runtime)
+             #   + runtimeObjectives (SLOs) + quantum.{id, allowedSyncQuanta} (the quantum boundary SSOT)
+quantum/     # whole-graph quantum check: check.py clones the estate and enforces cross-quantum sync
+             #   edges against the registry from one place (the estate-wide safety net)
+governance-plane/ # durable verdict store + scorecard API + slo-evaluator CronJob (ns: governance)
+scorecard/   # NDJSON verdicts + registry → per-P&L conformance report / HTML / Pushgateway
+docs/        # fitness-result.md + .schema.json (verdict contract); SYSTEM_VIEW / FITNESS_LIFECYCLE; ADRs
 FITNESS.md   # the catalog: every guardrail, its Ford classification, where it runs, its warn/enforce state
 ```
 
