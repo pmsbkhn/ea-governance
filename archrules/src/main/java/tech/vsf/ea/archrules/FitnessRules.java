@@ -13,6 +13,7 @@ import java.util.Set;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
@@ -175,6 +176,28 @@ public final class FitnessRules {
                 .should().dependOnClassesThat().resideInAPackage(clientPackage)
                 .because("an event-sourced aggregate's event store must stay inside its quantum "
                         + "(no synchronous cross-quantum persistence)")
+                .allowEmptyShould(true);
+    }
+
+    /**
+     * Concrete subtypes of {@code rootFqn} must extend a framework-provided base ({@code baseFqn}),
+     * never the root directly — so shared boilerplate (e.g. an identity's value/equals/hashCode/
+     * toString) is inherited from one place and cannot drift or be re-implemented. Abstract types and
+     * interfaces (the {@code rootFqn} itself and the base) are exempt, so the base may extend the root.
+     *
+     * <p>Single-base form. When more than one provided base exists for the same root (e.g. a future
+     * {@code LongIdentity} alongside {@code StringIdentity}), add an overload that passes when a class
+     * is assignable to <em>any</em> allowed base, so a long-id is not flagged for not extending the
+     * string base.</p>
+     */
+    public static ArchRule concreteSubtypesUseBase(String rootFqn, String baseFqn) {
+        return classes()
+                .that().areAssignableTo(rootFqn)
+                .and().doNotHaveModifier(JavaModifier.ABSTRACT)
+                .and().areNotInterfaces()
+                .should().beAssignableTo(baseFqn)
+                .because(simpleName(rootFqn) + " subtypes must extend " + simpleName(baseFqn)
+                        + " — never re-implement the value/equals/hashCode/toString boilerplate")
                 .allowEmptyShould(true);
     }
 

@@ -28,6 +28,8 @@ public final class MsfwFitness {
     public static final String ENTITY = "tech.vsf.ptnt.msfw.domain.core.Entity";
     public static final String REPOSITORY = "tech.vsf.ptnt.msfw.domain.core.Repository";
     public static final String EVENT_PUBLISH_HANDLER = "tech.vsf.ptnt.msfw.event.handling.EventPublishHandler";
+    public static final String IDENTITY = "tech.vsf.ptnt.msfw.domain.core.Identity";
+    public static final String STRING_IDENTITY = "tech.vsf.ptnt.msfw.domain.core.StringIdentity";
 
     private MsfwFitness() {
     }
@@ -59,6 +61,16 @@ public final class MsfwFitness {
 
     public static ArchRule aggregatesEncapsulated() {
         return FitnessRules.noPublicSettersOn(AGGREGATE);
+    }
+
+    /**
+     * Every concrete identity must extend {@code StringIdentity}, not {@code Identity} directly — so
+     * the value/equals/hashCode/toString boilerplate is inherited, never re-implemented (drift). The
+     * {@code serviceRoot} is accepted for call-site symmetry with {@link #domainIsPure(String)}; the
+     * import scope is set by {@code @AnalyzeClasses} / the {@code ClassFileImporter}, as for every rule.
+     */
+    public static ArchRule identitiesUseStringBase(String serviceRoot) {
+        return FitnessRules.concreteSubtypesUseBase(IDENTITY, STRING_IDENTITY);
     }
 
     public static ArchRule entitiesEncapsulated() {

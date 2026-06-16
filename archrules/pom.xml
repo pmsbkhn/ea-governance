@@ -6,7 +6,7 @@
 
     <groupId>tech.vsf.ea</groupId>
     <artifactId>ea-archrules</artifactId>
-    <version>0.5.0</version>
+    <version>0.6.0</version>
     <packaging>jar</packaging>
 
     <name>EA Architecture Rules</name>
