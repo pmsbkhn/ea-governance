@@ -10,5 +10,6 @@ spec:
   stack: java-msfw-framework
   fitnessFunctions:
     msfwModuleGraph: enforce
+    msfwIdentityBase: enforce
   waivers: []
   notes: "The framework itself; module-graph guardrail, not service rules."
